@@ -1,0 +1,91 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © jdehorty
+//@version=5
+indicator('テスト４', shorttitle='テスト４', overlay=true)
+
+// === BB/KC Parameters ===
+length = input(14, title='BB Length')
+mult = input(2.5, title='BB MultFactor')
+lengthKC = input(14, title='KC Length')
+multKC = input(2.0, title='KC MultFactor')
+useTrueRange = input(true, title='Use TrueRange (KC)')
+momentumThreshold = input(0.01, title='Momentum Threshold')
+
+// === Nadaraya-Watson Parameters ===
+src = input.source(close, 'Source (NW)')
+h = input.float(100., 'Lookback Window', minval=3.)
+r = input.float(8., 'Relative Weighting', step=0.25)
+x_0 = input.int(25, "Start Regression at Bar")
+smoothColors = input.bool(false, "Smooth Colors", inline='1', group='Colors')
+lag = input.int(2, "Lag", inline='1', group='Colors')
+size = array.size(array.from(src))
+
+// === BB Calculation ===
+source = close
+basis = ta.sma(source, length)
+dev = mult * ta.stdev(source, length)
+upperBB = basis + dev
+lowerBB = basis - dev
+
+// === KC Calculation ===
+ma = ta.sma(source, lengthKC)
+range_1 = useTrueRange ? ta.tr : high - low
+rangema = ta.sma(range_1, lengthKC)
+upperKC = ma + rangema * multKC
+lowerKC = ma - rangema * multKC
+
+// === Squeeze State ===
+sqzOn = lowerBB > lowerKC and upperBB < upperKC
+sqzOff = lowerBB < lowerKC and upperBB > upperKC
+
+// === Momentum ===
+val = ta.linreg(source - math.avg(math.avg(ta.highest(high, lengthKC), ta.lowest(low, lengthKC)), ma), lengthKC, 0)
+
+// === Nadaraya-Watson Function ===
+kernel_regression(_src, _size, _h) =>
+    float _currentWeight = 0.
+    float _cumulativeWeight = 0.
+    for i = 0 to _size + x_0
+        y = _src[i] 
+        w = math.pow(1 + (math.pow(i, 2) / ((math.pow(_h, 2) * 2 * r))), -r)
+        _currentWeight += y*w
+        _cumulativeWeight += w
+    _currentWeight / _cumulativeWeight
+
+// NW Estimates
+yhat1 = kernel_regression(src, size, h)
+yhat2 = kernel_regression(src, size, h-lag)
+
+// NW Crossover Logic
+isBullishSmooth = yhat2 > yhat1
+isBearishSmooth = yhat2 < yhat1
+
+color c_bullish = input.color(#3AFF17, 'Bullish Color', group='Colors')
+color c_bearish = input.color(#FD1707, 'Bearish Color', group='Colors')
+color plotColor = isBullishSmooth ? c_bullish : c_bearish
+
+// NW Plot
+plot(yhat1, "NW Kernel Estimate", color=plotColor, linewidth=2)
+
+// === BB/KC Alerts conditioned by NW color ===
+uptrend_entry_alert = ta.crossover(val, 0) and sqzOff and val > momentumThreshold and isBullishSmooth
+downtrend_entry_alert = ta.crossunder(val, 0) and sqzOff and val < -momentumThreshold and isBearishSmooth
+strong_uptrend_entry = ta.crossover(val, 0) and sqzOn and isBullishSmooth
+weak_downtrend_entry = ta.crossunder(val, 0) and sqzOn and isBearishSmooth
+combined_alert = uptrend_entry_alert or downtrend_entry_alert or strong_uptrend_entry or weak_downtrend_entry
+alertcondition(combined_alert, title='Combined Entry Alert', message='シグナルが発生しました')
+
+// === Combined Signal Plot ===
+plotshape(downtrend_entry_alert, location=location.abovebar, color=color.green, style=shape.triangledown, size=size.small)
+plotshape(uptrend_entry_alert, location=location.belowbar, color=color.red, style=shape.triangleup, size=size.small)
+plotshape(weak_downtrend_entry, location=location.abovebar, color=color.blue, style=shape.triangledown, size=size.small)
+plotshape(strong_uptrend_entry, location=location.belowbar, color=color.orange, style=shape.triangleup, size=size.small)
+
+// === Additional Line Signals ===
+plot(uptrend_entry_alert ? high + (high - low) * 0.1 : na, linewidth=2, color=color.green)
+plot(downtrend_entry_alert ? low - (high - low) * 0.1 : na, linewidth=2, color=color.red)
+plot(strong_uptrend_entry ? high + (high - low) * 0.1 : na, linewidth=2, color=color.blue)
+plot(weak_downtrend_entry ? low - (high - low) * 0.1 : na, linewidth=2, color=color.orange)
+
+// NW Alert Stream
+plot(isBullishSmooth ? 1 : isBearishSmooth ? -1 : 0, "NW Alert Stream", display=display.none)
