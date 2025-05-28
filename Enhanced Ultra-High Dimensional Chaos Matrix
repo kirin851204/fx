@@ -1,0 +1,57 @@
+//@version=5
+indicator("Enhanced Ultra-High Dimensional Chaos Matrix", overlay=false, max_labels_count=500, max_lines_count=500)
+
+// === 入力パラメーター ===
+primaryLength = input.int(8, title="Primary Length")
+secondaryLength = input.int(21, title="Secondary Length")
+tertiaryLength = input.int(55, title="Tertiary Length")
+quaternaryLength = input.int(89, title="Quaternary Length")
+chaosScale = input.float(2.0, title="Enhanced Chaos Scale Factor")  // 高次元スケール
+dimensionFactor = input.float(6.2830, title="Enhanced Dimension Scaling Factor")  // 高次元ファクター
+noiseIntensity = input.float(3.0, title="Enhanced Noise Intensity")  // ノイズ強度
+waveAmplitude = input.float(2.0, title="Wave Amplitude")
+
+// === 高次元カオス成分とランダムノイズ ===
+osc1 = ta.sma(close, primaryLength) * chaosScale * math.sin(volume * dimensionFactor * 0.5)
+osc2 = ta.sma(open, secondaryLength) * chaosScale * math.cos(high * dimensionFactor * 1.5)
+osc3 = ta.sma(high, tertiaryLength) * chaosScale * math.sin(low * dimensionFactor * 2.5)
+osc4 = ta.sma(low, quaternaryLength) * chaosScale * math.cos(close * dimensionFactor * 3.5)
+osc5 = ta.sma(close, 144) * chaosScale * math.sin(volume * dimensionFactor * 4.5)
+osc6 = ta.sma(open, 233) * chaosScale * math.cos(high * dimensionFactor * 5.5)
+
+// ランダムノイズの追加
+randomNoise1 = ta.sma(volume, primaryLength) * noiseIntensity * math.sin(close * chaosScale * 0.8)
+randomNoise2 = ta.sma(volume, secondaryLength) * noiseIntensity * math.cos(open * chaosScale * 1.2)
+randomNoise3 = ta.sma(volume, tertiaryLength) * noiseIntensity * math.sin(high * chaosScale * 1.5)
+
+// 高次元フラクタルとカオスパターンの生成
+complexFractal = (osc1 + osc2) * math.sin(randomNoise1) + (osc3 - osc2) * math.cos(randomNoise2)
+superFractal = (osc1 - osc4) * math.sin(randomNoise1) + (osc3 + osc4) * math.cos(randomNoise2) + (osc5 - osc6) * math.sin(randomNoise3)
+
+// === 異なる時間軸からのデータを使用した追加次元 ===
+multiTimeframe1 = request.security(syminfo.tickerid, "15", close) * chaosScale
+multiTimeframe2 = request.security(syminfo.tickerid, "30", open) * dimensionFactor
+multiTimeframe3 = request.security(syminfo.tickerid, "60", high) * noiseIntensity
+multiTimeframe4 = request.security(syminfo.tickerid, "120", low) * chaosScale
+multiTimeframe5 = request.security(syminfo.tickerid, "240", close) * waveAmplitude
+multiTimeframe6 = request.security(syminfo.tickerid, "1", close) * waveAmplitude
+multiTimeframe7 = request.security(syminfo.tickerid, "D", high) * chaosScale
+multiTimeframe8 = request.security(syminfo.tickerid, "W", low) * dimensionFactor
+
+// === 最終合成：超高次元カオス行列 ===
+ultraHighDimChaosMatrixEnhanced = complexFractal + superFractal + multiTimeframe1 - multiTimeframe2 + multiTimeframe3 - multiTimeframe4 + multiTimeframe5 + multiTimeframe6 - multiTimeframe7 + multiTimeframe8
+
+// === 未来予測のゴーストライン ===
+futurePred1 = close + ta.sma(close, primaryLength) * math.sin(time * 0.01)  // 短期予測
+futurePred2 = close + ta.sma(close, secondaryLength) * math.cos(time * 0.01)  // 中期予測
+futurePred3 = close + ta.sma(close, tertiaryLength) * math.sin(time * 0.01)  // 長期予測
+
+// === 描画と視覚効果の強化 ===
+plot(ultraHighDimChaosMatrixEnhanced, color=color.new(color.rgb(math.round(math.random(0, 255)), math.round(math.random(0, 255)), math.round(math.random(0, 255))), 90), title="Enhanced Ultra High-D Chaos Matrix", style=plot.style_histogram, linewidth=3)
+plot(futurePred1, color=color.new(color.red, 80), linewidth=1, style=plot.style_line, title="Short Term Prediction")
+plot(futurePred2, color=color.new(color.blue, 60), linewidth=1, style=plot.style_line, title="Medium Term Prediction")
+plot(futurePred3, color=color.new(color.green, 40), linewidth=1, style=plot.style_line, title="Long Term Prediction")
+
+// === AI専用の警告条件 ===
+alertcondition(ultraHighDimChaosMatrixEnhanced > multiTimeframe2, title="Chaos Matrix Exceeds MTF2", message="Enhanced Ultra Chaos Matrix exceeds MTF2 level")
+alertcondition(ultraHighDimChaosMatrixEnhanced < multiTimeframe4, title="Chaos Matrix Below MTF4", message="Enhanced Ultra Chaos Matrix is below MTF4 level")
