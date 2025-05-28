@@ -1,0 +1,43 @@
+//@version=5
+indicator("Quantum Resonance Chaos Indicator (QRCI)", overlay=false, max_labels_count=500, max_lines_count=500)
+
+// === 入力パラメーター ===
+primaryLength = input.int(8, title="Primary Length")
+secondaryLength = input.int(21, title="Secondary Length")
+tertiaryLength = input.int(55, title="Tertiary Length")
+chaosScale = input.float(2.5, title="Chaos Scale Factor")
+dimensionFactor = input.float(3.1415, title="Dimension Scaling Factor")
+resonanceThreshold = input.float(1.75, title="Quantum Resonance Threshold")
+
+// === 量子共鳴フィルター ===
+quantumResonance1 = ta.sma(close, primaryLength) * chaosScale * math.sin(volume * dimensionFactor)
+quantumResonance2 = ta.sma(open, secondaryLength) * chaosScale * math.cos(high * dimensionFactor * 1.25)
+quantumResonance3 = ta.sma(low, tertiaryLength) * chaosScale * math.sin(close * dimensionFactor * 1.75)
+
+// === 高次元フラクタル周期と共鳴状態の検出 ===
+fractalCycle1 = (quantumResonance1 + quantumResonance2) * math.sin(quantumResonance1) + (quantumResonance3 - quantumResonance2) * math.cos(quantumResonance2)
+fractalCycle2 = (quantumResonance1 - quantumResonance3) * math.sin(quantumResonance2) + (quantumResonance2 + quantumResonance3) * math.cos(quantumResonance3)
+
+// 共鳴状態の閾値を超えたかどうかで強いトレンドを検出
+resonanceSignal = (fractalCycle1 + fractalCycle2) > resonanceThreshold ? 1 : 0
+
+// === エンタングルメント分析：異なる時間軸間の相関 ===
+multiTimeframe1 = request.security(syminfo.tickerid, "15", close) * chaosScale
+multiTimeframe2 = request.security(syminfo.tickerid, "60", high) * dimensionFactor  // 修正箇所: "1H" -> "60"
+multiTimeframe3 = request.security(syminfo.tickerid, "240", low) * chaosScale  // 修正箇所: "4H" -> "240"
+
+// 各時間軸のエンタングルメントを評価
+entanglementValue = (multiTimeframe1 + multiTimeframe2 + multiTimeframe3) / 3
+entangledState = (quantumResonance1 * quantumResonance2 * quantumResonance3) > entanglementValue ? 1 : 0
+
+// === QRCI合成インジケーター値 ===
+QRCI = (resonanceSignal * fractalCycle1) + (entangledState * fractalCycle2)
+
+// === 描画設定 ===
+plot(QRCI, color=color.new(color.aqua, 80), title="Quantum Resonance Chaos Indicator", style=plot.style_histogram, linewidth=2)
+bgcolor(resonanceSignal ? color.new(color.red, 90) : na, transp=90)
+bgcolor(entangledState ? color.new(color.green, 90) : na, transp=90)
+
+// === アラート条件設定 ===
+alertcondition(resonanceSignal, title="Quantum Resonance Detected", message="Quantum Resonance has been detected")
+alertcondition(entangledState, title="Quantum Entanglement Active", message="Quantum Entanglement is active")
