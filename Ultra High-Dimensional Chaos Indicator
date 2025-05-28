@@ -1,0 +1,40 @@
+//@version=5
+indicator("Ultra High-Dimensional Chaos Indicator", overlay=false, max_labels_count=500, max_lines_count=500)
+
+// === 入力パラメーター ===
+primaryLength = input.int(13, title="Primary Length")
+secondaryLength = input.int(21, title="Secondary Length")
+tertiaryLength = input.int(34, title="Tertiary Length")
+chaosScale = input.float(0.95, title="Chaos Scale Factor")
+dimensionFactor = input.float(2.618, title="Dimension Scaling Factor")
+noiseIntensity = input.float(1.5, title="Noise Intensity")
+
+// === 高次元カオス成分とランダムノイズ ===
+chaosOsc1 = ta.sma(close, primaryLength) * chaosScale * math.sin(volume * dimensionFactor)
+chaosOsc2 = ta.sma(open, secondaryLength) * chaosScale * math.cos(high * dimensionFactor)
+chaosOsc3 = ta.sma(high, tertiaryLength) * chaosScale * math.sin(low * dimensionFactor * 1.5)
+randomNoise1 = ta.sma(volume, primaryLength) * noiseIntensity * math.sin(close * chaosScale)
+randomNoise2 = ta.sma(volume, secondaryLength) * noiseIntensity * math.cos(open * chaosScale)
+
+// 高次元フラクタルとカオスパターンの生成
+complexFractal = (chaosOsc1 + chaosOsc2) * math.sin(randomNoise1) + (chaosOsc3 - chaosOsc2) * math.cos(randomNoise2)
+
+// === 異なる時間軸からのデータ ===
+multiTimeframe1 = request.security(syminfo.tickerid, "15", close) * chaosScale
+multiTimeframe2 = request.security(syminfo.tickerid, "30", open) * dimensionFactor
+multiTimeframe3 = request.security(syminfo.tickerid, "60", high) * noiseIntensity
+multiTimeframe4 = request.security(syminfo.tickerid, "120", low) * chaosScale
+
+// === さらなる次元性の追加：高次元カオス合成 ===
+ultraHighDimChaos = complexFractal + multiTimeframe1 - multiTimeframe2 + multiTimeframe3 - multiTimeframe4
+
+// === 描画と視覚効果のさらなる強化 ===
+plot(ultraHighDimChaos, color=color.new(color.rgb(math.round(math.random(0, 255)), math.round(math.random(0, 255)), math.round(math.random(0, 255))), 90), title="Ultra High-D Chaos", style=plot.style_histogram, linewidth=3)
+plot(chaosOsc1, color=color.new(color.rgb(math.round(math.random(0, 255)), 0, math.round(math.random(0, 255))), 85), style=plot.style_circles, title="Osc1 Chaos Points")
+plot(chaosOsc2, color=color.new(color.rgb(0, math.round(math.random(0, 255)), math.round(math.random(0, 255))), 80), style=plot.style_area, title="Osc2 Chaos Points")
+plot(chaosOsc3, color=color.new(color.rgb(math.round(math.random(0, 255)), math.round(math.random(0, 255)), 0), 80), style=plot.style_line, title="Osc3 Chaos Line")
+bgcolor(ultraHighDimChaos > chaosOsc1 ? color.rgb(math.round(math.random(0, 50)), math.round(math.random(0, 50)), 150, 90) : na, transp=95)
+
+// === AI専用の警告条件 ===
+alertcondition(ultraHighDimChaos > multiTimeframe2, title="Ultra Chaos Exceeds MTF2", message="Ultra Chaos exceeds MTF2 level")
+alertcondition(ultraHighDimChaos < multiTimeframe3, title="Ultra Chaos Below MTF3", message="Ultra Chaos is below MTF3 level")
